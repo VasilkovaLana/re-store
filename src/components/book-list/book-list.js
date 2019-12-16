@@ -2,25 +2,30 @@ import React, { Component } from 'react';
 import BookListItem from '../book-list-item/book-list-item';
 import { connect } from 'react-redux';
 import withBookstoreService from '../hoc/with-bookstore-service';
-import { booksLoaded, booksRequested, booksError } from '../../actions/index';
+import { fetchBooks} from '../../actions/index';
 import { compose } from '../../utils/index';
 import Spinner from '../spinner/spinner';
 import ErrorIndicator from '../error-indicator/error-indicator';
 import './book-list.css';
 
-class BookList extends Component {
+const BookList = ({books}) => {
+  return(
+    <ul className="book-list">
+      {
+        books.map((book) => {
+          return (
+            <li key={book.id}><BookListItem book={book} /></li>
+          )
+        })
+      }
+    </ul>
+  );
+};
+
+class BookListContainer extends Component {
 
   componentDidMount() {
-    const { 
-      bookstoreService, 
-      booksLoaded, 
-      booksRequested, 
-      booksError } = this.props;
-
-    booksRequested();
-    bookstoreService.getBooks()
-      .then((data) => booksLoaded(data))
-      .catch((err) => booksError(err));
+    this.props.fetchBooks();
   }
   
   render(){
@@ -34,17 +39,7 @@ class BookList extends Component {
       return <ErrorIndicator />
     }
     
-    return(
-      <ul className="book-list">
-        {
-          books.map((book) => {
-            return (
-              <li key={book.id}><BookListItem book={book} /></li>
-            )
-          })
-        }
-      </ul>
-    );
+    return <BookList books={books} />;
   }
 };
 
@@ -52,13 +47,13 @@ const mapStateToProps = ({ books, loading, error }) => {
   return { books, loading, error };
 };
 
-const mapDispatchToProps = {
-  booksLoaded,
-  booksRequested,
-  booksError
-};
+const mapDispatchToProps = (dispatch, {bookstoreService}) => {
+  return{
+    fetchBooks: fetchBooks(dispatch, bookstoreService)
+  }
+ };
 
 export default compose(
   withBookstoreService(),
   connect(mapStateToProps, mapDispatchToProps)
-  )(BookList);
+  )(BookListContainer);
